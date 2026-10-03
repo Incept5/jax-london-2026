@@ -1,0 +1,287 @@
+#!/usr/bin/env python3
+"""Flask web app — GDPR Article Viewer.  Serves article summaries + full text from JSON."""
+
+import json
+from pathlib import Path
+from flask import Flask, render_template_string, jsonify
+
+HERE = Path(__file__).parent
+JSON_PATH = HERE / "data" / "gdpr_articles_20_25.json"
+
+app = Flask(__name__)
+
+# ---------------------------------------------------------------------------
+# HTML template — single page, professional look
+# ---------------------------------------------------------------------------
+PAGE = r"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GDPR Article Viewer</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --banner-bg: #1a1a2e;
+    --banner-accent: #e94560;
+    --bg: #f5f6fa;
+    --card-bg: #ffffff;
+    --card-border: #e0e0e0;
+    --card-hover-border: #3f51b5;
+    --text: #2c2c2c;
+    --text-secondary: #5e5e5e;
+    --tag-bg: #3f51b5;
+    --tag-text: #fff;
+    --detail-bg: #fafafa;
+    --detail-border: #c5cae9;
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* ── Banner ── */
+  .banner {
+    background: linear-gradient(135deg, var(--banner-bg) 0%, #16213e 60%, #0f3460 100%);
+    color: #fff;
+    padding: 28px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.18);
+  }
+  .banner h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+  .banner h1 span { color: var(--banner-accent); }
+  .banner .model-tag {
+    background: var(--banner-accent);
+    color: #fff;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+
+  /* ── Layout ── */
+  .container { max-width: 900px; margin: 0 auto; padding: 32px 20px 60px; }
+
+  .intro {
+    margin-bottom: 32px;
+  }
+  .intro h2 {
+    font-size: 1.35rem;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .intro p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+  }
+
+  /* ── Article Cards ── */
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 14px;
+    cursor: pointer;
+    transition: border-color .2s, box-shadow .2s, transform .15s;
+    display: flex;
+    align-items: flex-start;
+    gap: 18px;
+  }
+  .card:hover {
+    border-color: var(--card-hover-border);
+    box-shadow: 0 4px 16px rgba(63,81,181,.10);
+    transform: translateY(-1px);
+  }
+  .card.selected {
+    border-color: var(--card-hover-border);
+    box-shadow: 0 4px 20px rgba(63,81,181,.18);
+  }
+
+  .card .article-badge {
+    flex: 0 0 auto;
+    background: var(--tag-bg);
+    color: var(--tag-text);
+    font-weight: 700;
+    font-size: 0.82rem;
+    padding: 5px 12px;
+    border-radius: 6px;
+    white-space: nowrap;
+    margin-top: 2px;
+  }
+  .card .summary-text {
+    flex: 1;
+    font-size: 0.98rem;
+    color: var(--text);
+  }
+
+  /* ── Detail panel ── */
+  .detail-panel {
+    display: none;
+    background: var(--detail-bg);
+    border: 1px solid var(--detail-border);
+    border-radius: 10px;
+    padding: 24px 28px;
+    margin-bottom: 20px;
+    animation: fadeSlide .25s ease;
+  }
+  .detail-panel.open { display: block; }
+
+  .detail-panel .detail-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .detail-panel h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--banner-bg);
+  }
+  .detail-panel .close-btn {
+    background: none;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 5px 14px;
+    cursor: pointer;
+    font-size: 0.88rem;
+    color: #555;
+    transition: background .15s;
+  }
+  .detail-panel .close-btn:hover { background: #e0e0e0; }
+
+  .detail-panel .article-body {
+    font-size: 0.95rem;
+    line-height: 1.75;
+    white-space: pre-line;
+    color: #333;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center;
+    color: #aaa;
+    font-size: 0.78rem;
+    margin-top: 20px;
+  }
+
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 600px) {
+    .banner { padding: 20px 18px; }
+    .banner h1 { font-size: 1.2rem; }
+    .container { padding: 20px 14px 40px; }
+    .card { padding: 16px 18px; gap: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="banner">
+  <h1>📜 EU GDPR — <span>Article Viewer</span></h1>
+  <div class="model-tag">Claude Code – DeepSeek&nbsp;V4</div>
+</header>
+
+<div class="container">
+  <div class="intro">
+    <h2>Select an article to view its full text</h2>
+    <p>Summaries generated by <strong>qwen3.5:4B</strong> running locally on Ollama.
+       Click any card to expand the complete legal text.</p>
+  </div>
+
+  <div id="detail" class="detail-panel">
+    <div class="detail-header">
+      <h3 id="detail-title"></h3>
+      <button class="close-btn" onclick="closeDetail()">✕ Close</button>
+    </div>
+    <div class="article-body" id="detail-body"></div>
+  </div>
+
+  <div id="card-list"></div>
+
+  <div class="footer">
+    Source: <a href="https://gdpr-info.eu/" target="_blank" rel="noopener">gdpr-info.eu</a>
+    &nbsp;·&nbsp; For educational purposes only — not legal advice.
+  </div>
+</div>
+
+<script>
+// Data inlined from the server
+const DATA = {{ data_json | safe }};
+
+let selectedIdx = -1;
+
+function renderCards() {
+  const list = document.getElementById('card-list');
+  list.innerHTML = DATA.GDPR.map((item, i) => `
+    <div class="card${i === selectedIdx ? ' selected' : ''}" onclick="selectArticle(${i})">
+      <span class="article-badge">${item.article}</span>
+      <span class="summary-text">${esc(item.summary)}</span>
+    </div>
+  `).join('');
+}
+
+function selectArticle(idx) {
+  selectedIdx = idx;
+  const item = DATA.GDPR[idx];
+  document.getElementById('detail-title').textContent = item.article + ' GDPR';
+  document.getElementById('detail-body').textContent = item.full_article;
+  document.getElementById('detail').classList.add('open');
+  document.getElementById('detail').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  renderCards();
+}
+
+function closeDetail() {
+  selectedIdx = -1;
+  document.getElementById('detail').classList.remove('open');
+  renderCards();
+}
+
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+renderCards();
+</script>
+
+</body>
+</html>"""
+
+
+@app.route("/")
+def index():
+    with open(JSON_PATH, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    return render_template_string(PAGE, data_json=json.dumps(data, ensure_ascii=False))
+
+
+@app.route("/api/articles")
+def api_articles():
+    with open(JSON_PATH, "r", encoding="utf-8") as f:
+        return jsonify(json.load(f))
+
+
+if __name__ == "__main__":
+    print(f"📜 GDPR Article Viewer")
+    print(f"   Data: {JSON_PATH}")
+    print(f"   → http://localhost:7004")
+    app.run(host="0.0.0.0", port=7004, debug=False)

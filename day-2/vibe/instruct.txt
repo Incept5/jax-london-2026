@@ -1,0 +1,18 @@
+Please write code to scrape the GDPR articles from the following web site: https://gdpr-info.eu/. Use a local LLM, qwen3.5:4B running on Ollama
+to provide the following json for each article, the LLM will provide the summary:
+
+“GDPR”: [{
+    “article”: “Art. 22”
+    “summary”: “The GDPR’s “right to be forgotten” lets individuals demand prompt deletion…”
+    “full_article”: “1. Where point (a) of Article 6(1) applies, in relation to the offer of information…”
+}]
+
+There is some code in ./dev/jax-london-2026/jax-london-2026/day-2/scrape_gdpr_article.py that might be useful.
+
+Once you have the json file, do it initially for articles 20-25 rather than all of them, create a web site so that I can select the article by summary
+and see the full article when I select it. Make this look professional and plan for all of the articles once we've run the smoke test for 20-25.
+
+If there are any questions please ask me, otherwise complete the task, run the server and give me the URL.
+
+Please run this on port 7005
+Put a banner at the top with "OpenAI CodeX" on it

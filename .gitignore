@@ -1,0 +1,21 @@
+.DS_Store
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+TEACHER_NOTES.md
+.idea/
+/day-1/embeddings.pkl
+/day-2/chroma_db/
+
+# Face recognition lab: attendees' own photos, never commit
+/day-1/faces/
+/day-1/labelled.jpg
+/day-2/housing-page-*.md
+
+# Generated audio from the TTS demos
+/day-2/output/
+
+# Keynote decks never go to GitHub
+*.key

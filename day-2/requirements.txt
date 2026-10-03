@@ -1,0 +1,51 @@
+# JAX London 2026 — Hands-On GenAI Development Bootcamp · Day 2
+#
+# Every script in day-2/ is standalone and only imports what that one demo needs,
+# so you never need *all* of these at once. This file is the convenience superset:
+# install it into a venv and every Day-2 script will run. See ../PYTHON_SETUP.md.
+
+# --- Core: local + cloud model calls, env, HTTP (most demos) ---
+python-dotenv
+requests
+httpx              # MCP client / async HTTP demos
+urllib3<2          # pin avoids LibreSSL warnings/errors on macOS system Python
+numpy
+tabulate
+rich
+ollama
+
+# --- Cloud provider SDK (the *_groq.py family) ---
+groq
+
+# --- LM Studio Python SDK (visual_ml_studio.py, test_lmstudio_vision.py) ---
+lmstudio
+
+# --- RAG: vector store + embeddings + tokenisation ---
+chromadb
+sentence-transformers
+transformers
+torch              # pulled in by transformers / sentence-transformers
+tiktoken
+
+# --- Data / sentiment / summarisation demos ---
+pandas
+matplotlib
+textblob           # analyse_sentiment_*.py
+kagglehub          # analyse_sentiment_kaggle.py, kaggle_summary_complete.py
+
+# --- Web scraping (scrape.py, scrape_gdpr_article.py) ---
+beautifulsoup4
+
+# --- Vision demos (read_diagram.py, read_ocr_menu.py, read_music.py, find_beer.py) ---
+pillow
+
+# --- Model Context Protocol (MCP/ server + client) ---
+mcp
+
+# --- Apple Silicon ONLY — text-to-speech demo (chatterbox_tts.py) ---
+# Marker means pip installs it only on Apple Silicon Macs and skips it elsewhere.
+mlx-audio; platform_machine == "arm64" and sys_platform == "darwin"
+
+# --- Windows / Linux (and Mac) text-to-speech demo (chatterbox_turbo_tts.py) ---
+# Not installed by default because it pulls in PyTorch (large). When you want it:
+#   pip install chatterbox-tts

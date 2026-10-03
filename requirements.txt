@@ -1,0 +1,42 @@
+# JAX London 2026 — Hands-On GenAI Development Bootcamp
+#
+# Every script in day-1/ is standalone and only imports what that one demo needs,
+# so you never need *all* of these at once. This file is the convenience superset:
+# install it into a venv and every Day-1 script will run. See PYTHON_SETUP.md.
+
+# --- Core: local + cloud model calls, embeddings (most demos) ---
+python-dotenv
+requests
+urllib3<2          # pin avoids LibreSSL warnings/errors on macOS system Python
+numpy
+sounddevice        # microphone + speaker for the voice labs
+tabulate
+rich
+ollama
+openai             # also used by the Grok demo (base_url=https://api.x.ai/v1)
+
+# --- Cloud provider SDKs (basic_*.py family) ---
+anthropic
+groq
+together
+
+# --- Tokenisation / classic ML / embeddings demos ---
+transformers
+torch              # pulled in by transformers / sentence-transformers
+sentence-transformers
+scikit-learn
+tensorflow
+tf-keras           # transformers needs this with TensorFlow 2.16+ (Keras 3)
+matplotlib
+
+# --- Decoding / visualisation demos ---
+plotly
+gradio
+llama-cpp-python   # logit_probabilities.py; needs a C/C++ toolchain to build
+
+# --- LM Studio Python SDK (getting_started_lm_studio.py) ---
+lmstudio
+
+# --- Apple Silicon ONLY — the MLX path in three_local_backends.py ---
+# Marker means pip installs it only on Apple Silicon Macs and skips it elsewhere.
+mlx-vlm; platform_machine == "arm64" and sys_platform == "darwin"
