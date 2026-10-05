@@ -6,14 +6,14 @@ import fitz          # PyMuPDF: turns a PDF page into an image
 import ollama
 
 HERE = Path(__file__).parent
-PDF = HERE / "data" / "housing-new-york.pdf"   # "Housing New York: A Five-Borough, Ten-Year Plan" (City of New York, 2014)
-PAGE = int(sys.argv[1]) if len(sys.argv) > 1 else 23   # page 23: a bar chart of housing permits and completions
+PDF = HERE / "data" / "state-of-london-2026.pdf"   # "State of London 2026" (Greater London Authority / City Intelligence, 2026)
+PAGE = int(sys.argv[1]) if len(sys.argv) > 1 else 29   # page 29: a bar chart of involuntary worklessness in London
 MODEL = "qwen3.5:4b"   # vision-capable; try qwen3.6 or gemma4:26b for sharper reading
 TRANSCRIBE = ("Transcribe this page as Markdown. Keep headings, paragraphs and lists. Turn any table into a "
               "Markdown table, and describe any chart or picture in one short paragraph of text (never an image link). "
               "Output only the Markdown.")
 
-# 1. Render just one page: reading all 117 pages would take minutes
+# 1. Render just one page: reading all 141 pages would take minutes
 page = fitz.open(PDF)[PAGE - 1]
 png = page.get_pixmap(dpi=150).tobytes("png")
 
@@ -26,7 +26,7 @@ def ask(prompt):
 
 # 2. The page as Markdown, saved next to this script
 markdown = re.sub(r"!\[[^\]]*\]\([^)]*\)\n*", "", ask(TRANSCRIBE))   # small models like to invent image links
-out = HERE / f"housing-page-{PAGE}.md"
+out = HERE / f"state-of-london-page-{PAGE}.md"
 out.write_text(markdown + "\n")
 print(markdown, f"\n\n(saved to {out.name})\n")
 
